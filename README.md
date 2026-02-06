@@ -12,39 +12,34 @@ A recipe cookbook web application built with Ruby and the Sinatra framework, fea
 
 ## Prerequisites
 
-- Ruby >= 2.7.0
-- Bundler gem
-
-## Installation
-
-1. Install dependencies:
-```bash
-bundle install
-```
-
-2. Set up the database:
-```bash
-ruby db/setup.rb
-```
+- Docker
+- Docker Compose
 
 ## Running the Application
 
-### Development Mode (with auto-reload):
+### Using Docker (Recommended):
+
+1. Build and start the application:
 ```bash
-bundle exec rerun ruby app.rb
+docker compose up --build
 ```
 
-### Production Mode:
+2. The application will be available at: http://localhost:3000
+
+3. To stop the application:
 ```bash
-ruby app.rb
+docker compose down
 ```
 
-Or using Rack:
+### Running in detached mode (background):
 ```bash
-bundle exec rackup config.ru
+docker compose up -d
 ```
 
-The application will be available at: http://localhost:3000
+### View logs:
+```bash
+docker compose logs -f
+```
 
 ## Project Structure
 
@@ -113,12 +108,11 @@ The application uses SQLite3 with the following tables:
 
 ## Development
 
-To reset the database:
+The database is automatically set up when the Docker container starts. If you need to reset the database, restart the container:
 ```bash
-ruby db/setup.rb
+docker compose down
+docker compose up --build
 ```
-
-This will drop the existing database, recreate all tables, and reseed with sample data.
 
 ## License
 
