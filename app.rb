@@ -18,6 +18,7 @@ DATABASE = 'app.db'
 def get_db_connection
   db = SQLite3::Database.new(DATABASE)
   db.results_as_hash = true
+  db.execute('PRAGMA foreign_keys = ON')
   db
 end
 
@@ -123,6 +124,59 @@ get '/recipes/:id/' do
   }
   
   erb :recipe_detail, locals: { recipe: recipe_data }
+end
+
+# ============================================
+# API DOCUMENTATION
+# ============================================
+
+# Serve OpenAPI schema
+get '/api/schema' do
+  content_type 'application/yaml'
+  File.read('api-schema.yaml')
+end
+
+# Swagger UI endpoint
+get '/apidocs' do
+  html = <<~HTML
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Recipe Cookbook API - Swagger UI</title>
+      <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+      <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin: 0; padding: 0; }
+      </style>
+    </head>
+    <body>
+      <div id="swagger-ui"></div>
+      <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+      <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+      <script>
+        window.onload = function() {
+          window.ui = SwaggerUIBundle({
+            url: "/api/schema",
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+              SwaggerUIBundle.presets.apis,
+              SwaggerUIStandalonePreset
+            ],
+            plugins: [
+              SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout"
+          });
+        };
+      </script>
+    </body>
+    </html>
+  HTML
+  html
 end
 
 # ============================================
@@ -354,6 +408,17 @@ end
 # Delete a recipe
 delete '/api/recipe/recipes/:id/' do
   puts 'Route invoked: DELETE /api/recipe/recipes/:id/'
+  id = params[:id]
+  
+  db = get_db_connection
+  
+  # Enable foreign keys to ensure CASCADE delete works
+  db.execute('PRAGMA foreign_keys = ON')
+  
+  # Delete the recipe (CASCADE will handle recipe_ingredients and recipe_tags)
+  result = db.execute('DELETE FROM recipes WHERE id = ?', id)
+  db.close
+  
   status 204
 end
 
@@ -411,6 +476,12 @@ end
 # Delete an ingredient
 delete '/api/recipe/ingredients/:id/' do
   puts 'Route invoked: DELETE /api/recipe/ingredients/:id/'
+  id = params[:id]
+  
+  db = get_db_connection
+  db.execute('DELETE FROM ingredients WHERE id = ?', id)
+  db.close
+  
   status 204
 end
 
@@ -457,6 +528,12 @@ end
 # Delete a tag
 delete '/api/recipe/tags/:id/' do
   puts 'Route invoked: DELETE /api/recipe/tags/:id/'
+  id = params[:id]
+  
+  db = get_db_connection
+  db.execute('DELETE FROM tags WHERE id = ?', id)
+  db.close
+  
   status 204
 end
 
